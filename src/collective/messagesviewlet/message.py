@@ -25,9 +25,9 @@ from zope.schema.vocabulary import SimpleVocabulary
 
 def msg_types(context):
     terms = []
-    terms.append(SimpleTerm("info", title=_("info")))
-    terms.append(SimpleTerm("significant", title=_("significant")))
-    terms.append(SimpleTerm("warning", title=_("warning")))
+    terms.append(SimpleTerm('info', title=_('info')))
+    terms.append(SimpleTerm('significant', title=_('significant')))
+    terms.append(SimpleTerm('warning', title=_('warning')))
     return SimpleVocabulary(terms)
 
 
@@ -35,15 +35,14 @@ alsoProvides(msg_types, schema.interfaces.IContextSourceBinder)
 
 
 def location(context):
-    import ipdb;ipdb.set_trace()
     portal = api.portal.get()
     site = api.portal.getSite()
     config = site['messages-config']
     terms = []
-    terms.append(SimpleTerm("fullsite", title=_("Full site")))
-    terms.append(SimpleTerm("homepage", title=_("Homepage")))
-    terms.append(SimpleTerm("justhere", title=_("Just on this page")))
-    terms.append(SimpleTerm("fromhere", title=_("From this page")))
+    terms.append(SimpleTerm('fullsite', title=_('Full site')))
+    terms.append(SimpleTerm('homepage', title=_('Homepage')))
+    terms.append(SimpleTerm('justhere', title=_('Just on this page')))
+    terms.append(SimpleTerm('fromhere', title=_('From this page')))
     if INavigationRoot.providedBy(context) or \
                     context == config:
         return SimpleVocabulary(terms[0:2])
@@ -60,9 +59,9 @@ def printing_types(context):
     terms = []
     if INavigationRoot.providedBy(context) or \
                     context == config:
-        terms.append(SimpleTerm("global", title=_("Global printing")))
+        terms.append(SimpleTerm('global', title=_('Global printing')))
     else:
-        terms.append(SimpleTerm("local", title=_("Local printing")))
+        terms.append(SimpleTerm('local', title=_('Local printing')))
     return SimpleVocabulary(terms)
 
 alsoProvides(printing_types, schema.interfaces.IContextSourceBinder)
@@ -80,34 +79,34 @@ def default_start():
 class IMessage(model.Schema):
 
     title = schema.TextLine(
-        title=_(u"Title"),
+        title=_(u'Title'),
         required=True,
     )
 
     text = RichText(
-        title=_(u"Text"),
+        title=_(u'Text'),
         required=True,
-        description=_(u"Message text"),
+        description=_(u'Message text'),
     )
 
     msg_type = schema.Choice(
-        title=_(u"Message type"),
+        title=_(u'Message type'),
         required=True,
         source=msg_types,
-        description=_(u"Following the type, the color will be different"),
+        description=_(u'Following the type, the color will be different'),
     )
 
     form.widget('can_hide', RadioFieldWidget)
     can_hide = schema.Bool(
-        title=_(u"Can be marked as read"),
-        description=_(u"If checked, the user can hide the message"),
+        title=_(u'Can be marked as read'),
+        description=_(u'If checked, the user can hide the message'),
         default=False
     )
 
     start = schema.Datetime(
-        title=_(u"Start date"),
+        title=_(u'Start date'),
         required=False,
-        description=_(u"Specify start date message appearance"),
+        description=_(u'Specify start date message appearance'),
         defaultFactory=default_start,
     )
     if HAS_PLONE_5:
@@ -116,7 +115,7 @@ class IMessage(model.Schema):
         form.widget('start', dtfw4)
 
     end = schema.Datetime(
-        title=_(u"End date"),
+        title=_(u'End date'),
         required=False,
         description=_(u"Specify end date message appearance. If nothing specified, this is infinite. "
                       "If you pick a date, <span class=warning-formHelp>dont't forget hours !</span>"),
@@ -136,26 +135,26 @@ class IMessage(model.Schema):
 
     form.widget('use_local_roles', RadioFieldWidget)
     use_local_roles = schema.Bool(
-        title=_(u"Use Reader local role"),
+        title=_(u'Use Reader local role'),
         description=_(u"If checked, the message will be shown only to users having message local role 'Reader'"),
         default=False,
     )
 
 
     printing_types = schema.Choice(
-        title=_(u"Printing Types"),
+        title=_(u'Printing Types'),
         required=True,
         source=printing_types,
     )
 
     location = schema.Choice(
-        title=_(u"Location"),
+        title=_(u'Location'),
         required=True,
         source=location,
     )
 
     hidden_uid = schema.TextLine(
-        title=u"Generated uid",
+        title=u'Generated uid',
         defaultFactory=generate_uid,
     )
     form.mode(hidden_uid='hidden')
@@ -164,7 +163,7 @@ class IMessage(model.Schema):
     def validateStartEnd(data):
         if data.start is not None and data.end is not None:
             if data.start > data.end:
-                raise Invalid(_(u"The start date must precede the end date."))
+                raise Invalid(_(u'The start date must precede the end date.'))
 
 if not HAS_PLONE_5:
     TZ = default_timezone(as_tzinfo=True)
