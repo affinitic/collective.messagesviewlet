@@ -1,0 +1,11 @@
+<div class="local-message">
+    <tal:def define="messages view/get_messages"
+             condition="messages"
+	     i18n:domain="collective.messagesviewlet">
+        <tal:loop repeat="message messages">
+	    <tal:cond condition="python:message.printing_types == 'local'">
+                <span tal:replace="structure python:message.text.output" />
+	    </tal:cond>
+	</tal:loop>
+    </tal:def>
+</div>

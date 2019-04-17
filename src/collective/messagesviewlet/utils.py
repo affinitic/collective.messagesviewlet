@@ -24,7 +24,7 @@ def _richtextval(text):
 
 
 def add_message(id, title, text, msg_type='info', can_hide=False, start=datetime.now(), end='', req_roles=[],
-                location='fullsite', tal_condition='', roles_byp_talcond=[], use_local_roles=False, activate=False):
+                location='fullsite', tal_condition='', roles_byp_talcond=[], use_local_roles=False, activate=False, container='default'):
     """
         Add a message in the configuration folder
             msg_type: info, significant, warning
@@ -33,16 +33,17 @@ def add_message(id, title, text, msg_type='info', can_hide=False, start=datetime
             location: fullsite, homepage
     """
     site = api.portal.getSite()
-    config = site['messages-config']
+    if container == 'default':
+        container = site['messages-config']
     # We pass if id already exists
-    if id in config:
+    if id in container:
         return None
     rich_text = _richtextval(text)
     try:
         end_date = datetime.strptime(end, '%Y%m%d-%H%M')
     except ValueError:
         end_date = None
-    message = api.content.create(container=config, type='Message', id=id, title=title,
+    message = api.content.create(container=container, type='Message', id=id, title=title,
                                  **{'msg_type': msg_type, 'text': rich_text, 'can_hide': can_hide,
                                     'start': start, 'end': end_date, 'required_roles': req_roles,
                                     'location': location, 'hidden_uid': generate_uid(),
@@ -64,7 +65,7 @@ def get_messages_to_show(context):
         mb_roles = set(['Anonymous'])
     else:
         mb_roles = set(api.user.get_roles(obj=context))
-    now = DateTime()
+    now = datetime.now() # DateTime()
     brains = catalog.unrestrictedSearchResults(portal_type=['Message'],
                                                start={'query': now, 'range': 'max'},
                                                end={'query': now, 'range': 'min'},
@@ -77,6 +78,12 @@ def get_messages_to_show(context):
             # Test if context is PloneSite or its default page
             if not INavigationRoot.providedBy(context) and \
                     not isDefaultPage(portal, context):
+                continue
+        elif message.location == 'justhere':
+            if context.absolute_url() != message.absolute_url() and context.absolute_url() != message.aq_parent.absolute_url():
+                continue
+        elif message.location == 'fromhere':
+            if '/'.join(message.absolute_url().split('/')[:-1]) not in context.absolute_url():
                 continue
         # check in the cookie if message is marked as read
         if message.can_hide:

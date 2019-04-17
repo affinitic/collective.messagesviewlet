@@ -2,8 +2,11 @@
 from collective.messagesviewlet import _
 from collective.messagesviewlet import HAS_PLONE_5
 from DateTime import DateTime
+from plone import api
 from plone.app.event.base import default_timezone
 from plone.app.event.base import localized_now
+# from plone.app.layout.navigation.defaultpage import isDefaultPage
+from plone.app.layout.navigation.interfaces import INavigationRoot
 from plone.app.textfield import RichText
 from plone.app.z3cform.widget import DatetimeFieldWidget as dtfw5
 from plone.autoform import directives as form
@@ -32,13 +35,37 @@ alsoProvides(msg_types, schema.interfaces.IContextSourceBinder)
 
 
 def location(context):
+    import ipdb;ipdb.set_trace()
+    portal = api.portal.get()
+    site = api.portal.getSite()
+    config = site['messages-config']
     terms = []
     terms.append(SimpleTerm("fullsite", title=_("Full site")))
     terms.append(SimpleTerm("homepage", title=_("Homepage")))
-    return SimpleVocabulary(terms)
+    terms.append(SimpleTerm("justhere", title=_("Just on this page")))
+    terms.append(SimpleTerm("fromhere", title=_("From this page")))
+    if INavigationRoot.providedBy(context) or \
+                    context == config:
+        return SimpleVocabulary(terms[0:2])
+    else:
+        return SimpleVocabulary(terms[2:])
 
 
 alsoProvides(location, schema.interfaces.IContextSourceBinder)
+
+def printing_types(context):
+    portal = api.portal.get()
+    site = api.portal.getSite()
+    config = site['messages-config']
+    terms = []
+    if INavigationRoot.providedBy(context) or \
+                    context == config:
+        terms.append(SimpleTerm("global", title=_("Global printing")))
+    else:
+        terms.append(SimpleTerm("local", title=_("Local printing")))
+    return SimpleVocabulary(terms)
+
+alsoProvides(printing_types, schema.interfaces.IContextSourceBinder)
 
 
 def generate_uid():
@@ -112,6 +139,13 @@ class IMessage(model.Schema):
         title=_(u"Use Reader local role"),
         description=_(u"If checked, the message will be shown only to users having message local role 'Reader'"),
         default=False,
+    )
+
+
+    printing_types = schema.Choice(
+        title=_(u"Printing Types"),
+        required=True,
+        source=printing_types,
     )
 
     location = schema.Choice(
