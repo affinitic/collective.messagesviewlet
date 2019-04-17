@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from collective.messagesviewlet.browser.messagesviewlet import MessagesViewlet
+from collective.messagesviewlet.viewlets.localmessagesviewlet import LocalMessagesViewlet
+from collective.messagesviewlet.message import generate_uid
 from collective.messagesviewlet.message import IMessage
 from collective.messagesviewlet.message import location
 from collective.messagesviewlet.message import msg_types
@@ -7,6 +9,7 @@ from collective.messagesviewlet.testing import COLLECTIVE_MESSAGESVIEWLET_INTEGR
 from collective.messagesviewlet.testing import IS_PLONE_5
 from collective.messagesviewlet.utils import add_message
 from DateTime import DateTime
+from datetime import datetime
 from plone import api
 from plone.app.layout.navigation.interfaces import INavigationRoot
 from plone.app.testing import login
@@ -19,7 +22,7 @@ from zope.component import queryUtility
 from zope.interface import alsoProvides
 
 import unittest
-
+NUMBER_OF_PORTAL_TYPE_MESSAGE = 9
 
 class MessageIntegrationTest(unittest.TestCase):
 
@@ -31,15 +34,35 @@ class MessageIntegrationTest(unittest.TestCase):
         self.member = api.user.get_current()
         self.portal.REQUEST['AUTHENTICATED_USER'] = self.member
 
-    def _set_viewlet(self):
+    def _set_viewlet(self, context='default', request='default'):
         """
         """
-        viewlet = MessagesViewlet(self.portal, self.portal.REQUEST, None, None)
+        if context == 'default':
+            context = self.portal
+        if request == 'default':
+            request = self.portal.REQUEST
+        now = datetime.now()
+        portal = api.portal.get()
+        catalog = api.portal.get_tool(name='portal_catalog')
+        if request == 'default':
+            viewlet = MessagesViewlet(context, request, None, None)
+        else:
+            viewlet = LocalMessagesViewlet(context, request, None, None)
         viewlet.update()
+        brains = catalog.unrestrictedSearchResults(portal_type=['Message'],
+                                               start={'query': now, 'range': 'max'},
+                                               end={'query': now, 'range': 'min'})
         # activate all messages.
-        for i, message_type in enumerate(self.message_types):
-            self.wftool.doActionFor(self.messages[i], 'activate')
+        for brain in brains:
+            message = brain._unrestrictedGetObject()
+            self.wftool.doActionFor(message, 'activate')
+        #for i, message_type in enumerate(self.message_types):
+        #    self.wftool.doActionFor(self.messages[i], 'activate')
         return viewlet
+
+    def _create_folder(self):
+        folder = api.content.create(container=self.portal, type='Folder', id='myfolder', title='myfolder')
+        return folder
 
     def setUp(self):
         """Custom shared utility setup for tests."""
@@ -47,22 +70,32 @@ class MessageIntegrationTest(unittest.TestCase):
         self.portal = self.layer['portal']
         self.message_types = [term.token for term in msg_types(self.portal)._terms]
         # The products build the "special" folder "messages-config" to store messages.
-        self.message_config_folder = self.portal["messages-config"]
+        self.message_config_folder = self.portal['messages-config']
         setRoles(self.portal, TEST_USER_ID, ['Manager'])
         self.installer = api.portal.get_tool('portal_quickinstaller')
         self.wftool = self.portal.portal_workflow
         self.messages = []
-        # Create some messages
+        # Create some messages in default "global" message-config folder.
         for i, message_type in enumerate(self.message_types):
             title = 'message%d' % (i + 1)
-            text = "<p>This is test message number %d...</p>"\
-                   "<p>self-destruction programmed at the end of this test.</p>" % (i + 1)
+            text = '<p>This is test message number %d...</p>'\
+                   '<p>self-destruction programmed at the end of this test.</p>' % (i + 1)
             message = add_message(id=title,
                                   title=title,
                                   text=text,
                                   msg_type=self.message_types[i],
                                   can_hide=self.isHidden[i])
             self.messages.append(message)
+        another_folder = self._create_folder()
+        # Create some messages in others "local" folders.
+        msg = add_message(id='message4',
+                          title='message4',
+                          text='This message isn\'t in default folder.It\'s in another folder!',
+                          location='justhere',
+                          msg_type=self.message_types[2],
+                          can_hide=self.isHidden[2],
+                          container=another_folder)
+        self.messages.append(msg)
 
     def test_schema(self):
         fti = queryUtility(IDexterityFTI, name='Message')
@@ -131,9 +164,9 @@ class MessageIntegrationTest(unittest.TestCase):
         viewlet = self._set_viewlet()
         self.assertEqual(len(viewlet.getAllMessages()), len(self.message_types))
         message = self.messages[2]
-        message.tal_condition = "python:False"
+        message.tal_condition = 'python:False'
         self.assertEqual(len(viewlet.getAllMessages()), 2)
-        message.tal_condition = "python:context==portal"
+        message.tal_condition = 'python:context==portal'
         self.assertEqual(len(viewlet.getAllMessages()), 3)
 
     def test_getAllMessages_location(self):
@@ -142,7 +175,7 @@ class MessageIntegrationTest(unittest.TestCase):
         locations = [term.token for term in location(self.portal)._terms]
         self.assertEquals(locations, ['fullsite', 'homepage'])
         message = self.messages[2]
-        message.location = "homepage"
+        message.location = 'homepage'
         message.reindexObject()
         self.assertEqual(len(viewlet.getAllMessages()), 3)
         viewlet.context = self.message_config_folder
@@ -189,6 +222,20 @@ class MessageIntegrationTest(unittest.TestCase):
         # Checks that an anonymous user can't see anymore the restricted one.
         self.assertSetEqual(set(viewlet.getAllMessages()), set((self.messages[1], self.messages[2])))
 
+    def test_getMessage_in_another_folder(self):
+        #To get this message (justhere), we must be in folder (context = myfolder)
+        context = self.portal['myfolder']
+        viewlet = self._set_viewlet(context=context)
+        self.assertEqual(len(viewlet.getAllMessages()), 4)
+
+    def test_getMessage_in_another_folder_location(self):
+        #To get this message (justhere), we must be in folder (context = myfolder)
+        context = self.portal['myfolder']
+        viewlet = self._set_viewlet(context=context)
+        locations = [term.token for term in location(context)._terms]
+        self.assertEquals(locations, ['justhere', 'fromhere'])
+
+
     def test_getAllMessages_local_roles(self):
         viewlet = self._set_viewlet()
         self.assertEqual(len(viewlet.getAllMessages()), len(self.message_types))
@@ -200,4 +247,4 @@ class MessageIntegrationTest(unittest.TestCase):
     def test_examples_profile(self):
         self.portal.portal_setup.runImportStepFromProfile('profile-collective.messagesviewlet:messages',
                                                           'collective-messagesviewlet-messages')
-        self.assertEqual(len(self.portal.portal_catalog(portal_type='Message')), 8)
+        self.assertEqual(len(self.portal.portal_catalog(portal_type='Message')), NUMBER_OF_PORTAL_TYPE_MESSAGE)
