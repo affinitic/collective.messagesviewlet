@@ -10,8 +10,8 @@
         layer="collective.messagesviewlet.interfaces.ICollectiveMessagesviewletLayer"
         name="message-viewlet"
         manager="plone.app.layout.viewlets.interfaces.IAboveContent"
-        class=".local_message.LocalMessageViewlet"
-        template="local_message.pt"
+        class=".localmessagesviewlet.LocalMessagesViewlet"
+        template="localmessagesviewlet.pt"
         permission="zope2.View"
         />
 </configure>
