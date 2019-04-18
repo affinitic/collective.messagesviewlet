@@ -1,5 +1,5 @@
-<div class="local-message">
-    <tal:def define="messages view/get_messages"
+<div class="local-messages">
+    <tal:def define="messages view/getAllMessages"
              condition="messages"
 	     i18n:domain="collective.messagesviewlet">
         <tal:loop repeat="message messages">
