@@ -244,6 +244,43 @@ class MessageIntegrationTest(unittest.TestCase):
         self.messages[0].manage_setLocalRoles(TEST_USER_ID, ['Reader'])
         self.assertEqual(len(viewlet.getAllMessages()), 3)
 
+
+    def test_hidden_uid_when_workflow_changes(self):
+        # saves the hidden uid before it changes because of the workflow
+        # modifications
+        hidden_uid = self.messages[0].hidden_uid
+        self.wftool.doActionFor(self.messages[0], 'activate')
+        self.wftool.doActionFor(self.messages[0], 'deactivate')
+        # checks if the hidden uid has whell changed.
+        self.assertNotEqual(hidden_uid, self.messages[0])
+
+    def test_required_roles_permissions(self):
+        viewlet = self._set_viewlet()
+        self.assertEqual(len(viewlet.getAllMessages()), len(self.message_types))
+        # Sets the required role to 'Authenticated' to message 1
+        self.messages[0].required_roles = set(['Authenticated'])
+        # Checks that we still see all messages as we are authenticated
+        self.assertEqual(len(viewlet.getAllMessages()), 3)
+        logout()
+        # Checks that an anonymous user can't see anymore the restricted one.
+        self.assertSetEqual(set(viewlet.getAllMessages()), set((self.messages[1], self.messages[2])))
+
+    def test_local_messages_in_another_folder(self):
+        #To get this message (justhere), we must be in folder (context = myfolder)
+        context = self.portal['myfolder']
+        viewlet = self._set_viewlet(context=context)
+        self.assertEqual(len(viewlet.getAllMessages()), 4)
+
+    def test_local_messages_in_another_folder_location(self):
+        #To get this message (justhere), we must be in folder (context = myfolder)
+        context = self.portal['myfolder']
+        viewlet = self._set_viewlet(context=context)
+
+    def test_local_messages_viewlet_render(self):
+        viewlet = LocalMessagesViewlet(self.portal, self.portal.REQUEST, None, None)
+        viewlet.update()
+        self.assertIn('local-messages', viewlet.render())
+
     def test_examples_profile(self):
         self.portal.portal_setup.runImportStepFromProfile('profile-collective.messagesviewlet:messages',
                                                           'collective-messagesviewlet-messages')
