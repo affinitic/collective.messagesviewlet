@@ -65,6 +65,14 @@
       handler="collective.messagesviewlet.upgrades.upgrade_to_2000"
       profile="collective.messagesviewlet:default" />
 
+  <genericsetup:upgradeStep
+      title="Go to collective.messagesviewlet to 1002"
+      description="Add printing_types to globaly or localy add new Messages"
+      source="1001"
+      destination="1002"
+      handler="collective.messagesviewlet.upgrades.upgrade_to_1002"
+      profile="collective.messagesviewlet:default" />
+
   <utility factory=".setuphandlers.HiddenProfiles" name="collective.messagesviewlet" />
 
 </configure>

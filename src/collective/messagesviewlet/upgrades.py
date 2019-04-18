@@ -46,3 +46,22 @@ def upgrade_to_2000(context):
         # that breaks metadata update
         obj.reindexObject()
     logger.info('Corrected %d messages' % count)
+
+def upgrade_to_1002(context):
+    """
+       Add printing_types to allow "global" or "local" (in specific folders) Messages 
+    """
+    catalog = api.portal.get_tool('portal_catalog')
+    brains = catalog(portal_type='Message')
+    logger.info('Found %d messages' % len(brains))
+    count = 0
+    for brain in brains:
+        obj = brain.getObject()
+        correction = False
+        if not hasattr(obj, 'printing_types'):
+            obj.printing_types = 'global'
+            correction = True
+        if correction:
+            count += 1
+        obj.reindexObject
+    logger.info('Corrected %d messages (set printing_types to global)' % count)
