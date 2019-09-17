@@ -5,6 +5,9 @@ Changelog
 0.21 (unreleased)
 -----------------
 
+- Adapts setuphandlers and configlet for multilingual.
+  [vpiret]
+
 - Restricts the message to the navigation root.
   [vpiret]
 

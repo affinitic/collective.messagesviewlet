@@ -17,19 +17,21 @@ def post_install(context):
     """Post install script."""
     if context.readDataFile('collectivemessagesviewlet_default.txt') is None:
         return
-    site = context.getSite()
-
-    if not site.get(FOLDER):
-        types = getToolByName(site, 'portal_types')
-        types.getTypeInfo('MessagesConfig').global_allow = True
-        container = api.content.create(site,
-                                       "MessagesConfig",
-                                       id=FOLDER,
-                                       title=_('Messages viewlet settings', context=site)
-                                       )
-        excl = IExcludeFromNavigation(container)
-        excl.exclude_from_nav = True
-        types.getTypeInfo('MessagesConfig').global_allow = False
+    language_tool = api.portal.get_tool('portal_languages')
+    langs = language_tool.supported_langs
+    for lang in langs:
+        site = context.getSite().get(lang, context.getSite())
+        if not site.get(FOLDER):
+            types = getToolByName(site, 'portal_types')
+            types.getTypeInfo('MessagesConfig').global_allow = True
+            container = api.content.create(site,
+                                           "MessagesConfig",
+                                           id=FOLDER,
+                                           title=_('Messages viewlet settings', context=site)
+                                           )
+            excl = IExcludeFromNavigation(container)
+            excl.exclude_from_nav = True
+            types.getTypeInfo('MessagesConfig').global_allow = False
 
 
 @implementer(Plone.INonInstallable)

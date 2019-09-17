@@ -29,4 +29,12 @@
         permission="zope2.View"
         />
 
+  <browser:page
+      name="messagesviewlet-settings"
+      for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+      permission="cmf.ManagePortal"
+      class=".controlpanel.MessagesViewletSettings"
+      layer="collective.messagesviewlet.interfaces.ICollectiveMessagesviewletLayer"
+      />
+
 </configure>
