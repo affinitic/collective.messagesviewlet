@@ -80,7 +80,11 @@ def get_messages_to_show(context, caching=True):
         else:
             mb_roles = set(api.user.get_roles(obj=context))
         now = DateTime()
-        brains = catalog.unrestrictedSearchResults(portal_type=['Message'],
+
+        nav_root = api.portal.get_navigation_root(context)
+        nav_root_path = nav_root.absolute_url_path()
+        brains = catalog.unrestrictedSearchResults(path=nav_root_path,
+                                                   portal_type=['Message'],
                                                    start={'query': now, 'range': 'max'},
                                                    end={'query': now, 'range': 'min'},
                                                    review_state=('activated'),

@@ -5,7 +5,8 @@ Changelog
 0.21 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Restricts the message to the navigation root.
+  [vpiret]
 
 
 0.20 (2019-08-23)
