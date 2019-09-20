@@ -23,13 +23,13 @@ def post_install(context):
     for lang in langs:
         site = context.getSite().get(lang, context.getSite())
         if not site.get(FOLDER):
+            types = getToolByName(site, 'portal_types')
+            types.getTypeInfo('MessagesConfig').global_allow = True
             behavior = ISelectableConstrainTypes(site)
             list_addable_type = behavior.getImmediatelyAddableTypes()
             if "MessagesConfig" not in list_addable_type:
                 list_addable_type.append("MessagesConfig")
             set_addable_types(site, list_addable_type)
-            types = getToolByName(site, 'portal_types')
-            types.getTypeInfo('MessagesConfig').global_allow = True
             container = api.content.create(site,
                                            "MessagesConfig",
                                            id=FOLDER,
@@ -80,4 +80,5 @@ def set_addable_types(obj, types):
     """Set the allowed types on an object"""
     behavior = ISelectableConstrainTypes(obj)
     behavior.setConstrainTypesMode(1)
+    behavior.setLocallyAllowedTypes(types)
     behavior.setImmediatelyAddableTypes(types)
