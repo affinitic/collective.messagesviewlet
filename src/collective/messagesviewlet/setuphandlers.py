@@ -3,6 +3,7 @@
 from collective.messagesviewlet import HAS_PLONE_5
 from plone import api
 from plone.app.dexterity.behaviors.exclfromnav import IExcludeFromNavigation
+from Products.CMFPlone.interfaces.constrains import ISelectableConstrainTypes
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import interfaces as Plone
 from utils import _
@@ -22,6 +23,11 @@ def post_install(context):
     for lang in langs:
         site = context.getSite().get(lang, context.getSite())
         if not site.get(FOLDER):
+            behavior = ISelectableConstrainTypes(site)
+            list_addable_type = behavior.getImmediatelyAddableTypes()
+            if "MessagesConfig" not in list_addable_type:
+                list_addable_type.append("MessagesConfig")
+            set_addable_types(site, list_addable_type)
             types = getToolByName(site, 'portal_types')
             types.getTypeInfo('MessagesConfig').global_allow = True
             container = api.content.create(site,
@@ -32,7 +38,7 @@ def post_install(context):
             excl = IExcludeFromNavigation(container)
             excl.exclude_from_nav = True
 
-    types.getTypeInfo('MessagesConfig').global_allow = False
+            types.getTypeInfo('MessagesConfig').global_allow = False
 
 
 @implementer(Plone.INonInstallable)
@@ -68,3 +74,10 @@ def add_default_messages(context):
                 msg_type='warning', can_hide=False,
                 tal_condition="python: 'Firefox' not in context.REQUEST.get('HTTP_USER_AGENT') and "
                 "'Chrome' not in context.REQUEST.get('HTTP_USER_AGENT')")
+
+
+def set_addable_types(obj, types):
+    """Set the allowed types on an object"""
+    behavior = ISelectableConstrainTypes(obj)
+    behavior.setConstrainTypesMode(1)
+    behavior.setImmediatelyAddableTypes(types)
