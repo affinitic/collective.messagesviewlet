@@ -20,16 +20,31 @@ def post_install(context):
         return
     language_tool = api.portal.get_tool('portal_languages')
     langs = language_tool.supported_langs
-    for lang in langs:
-        site = context.getSite().get(lang, context.getSite())
+    if len(langs) > 1:
+        for lang in langs:
+            site = context.getSite().get(lang, context.getSite())
+            if not site.get(FOLDER):
+                types = getToolByName(site, 'portal_types')
+                types.getTypeInfo('MessagesConfig').global_allow = True
+                behavior = ISelectableConstrainTypes(site)
+                list_addable_type = behavior.getImmediatelyAddableTypes()
+                if "MessagesConfig" not in list_addable_type:
+                    list_addable_type.append("MessagesConfig")
+                set_addable_types(site, list_addable_type)
+                container = api.content.create(site,
+                                               "MessagesConfig",
+                                               id=FOLDER,
+                                               title=_('Messages viewlet settings', context=site)
+                                               )
+                excl = IExcludeFromNavigation(container)
+                excl.exclude_from_nav = True
+
+                types.getTypeInfo('MessagesConfig').global_allow = False
+    else:
+        site = context.getSite()
         if not site.get(FOLDER):
             types = getToolByName(site, 'portal_types')
             types.getTypeInfo('MessagesConfig').global_allow = True
-            behavior = ISelectableConstrainTypes(site)
-            list_addable_type = behavior.getImmediatelyAddableTypes()
-            if "MessagesConfig" not in list_addable_type:
-                list_addable_type.append("MessagesConfig")
-            set_addable_types(site, list_addable_type)
             container = api.content.create(site,
                                            "MessagesConfig",
                                            id=FOLDER,
