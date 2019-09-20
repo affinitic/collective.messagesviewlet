@@ -31,7 +31,8 @@ def post_install(context):
                                            )
             excl = IExcludeFromNavigation(container)
             excl.exclude_from_nav = True
-            types.getTypeInfo('MessagesConfig').global_allow = False
+
+    types.getTypeInfo('MessagesConfig').global_allow = False
 
 
 @implementer(Plone.INonInstallable)
