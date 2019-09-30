@@ -5,6 +5,9 @@ Changelog
 0.21 (unreleased)
 -----------------
 
+- Add class for detect messagesviewlet
+  [vpiret]
+
 - Adapts setuphandlers and configlet for multilingual.
   [vpiret]
 
