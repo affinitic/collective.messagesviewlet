@@ -82,7 +82,7 @@ def get_messages_to_show(context, caching=True):
         now = DateTime()
 
         nav_root = api.portal.get_navigation_root(context)
-        nav_root_path = nav_root.absolute_url_path()
+        nav_root_path = "/".join(nav_root.getPhysicalPath())
         brains = catalog.unrestrictedSearchResults(path=nav_root_path,
                                                    portal_type=['Message'],
                                                    start={'query': now, 'range': 'max'},
